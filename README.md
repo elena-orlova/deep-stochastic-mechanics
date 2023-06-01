@@ -1,10 +1,10 @@
 # Deep Stochastic Mechanics (DSM)
 
-DSM paper code. 
+DSM [paper](https://arxiv.org/abs/2305.19685) code.
 
 ## Code
 
-There are the following notebooks with code: 
+There are the following notebooks: 
 - An experiment with a singular initial condition: ```1d_singular_DSM.ipynb``` 
 - A harmonic oscillator in 1d with zero initial phase, DSM and PINN: ```1d_oscillator_zero_phase_DSM.ipynb```, ```1d_oscillator_zero_phase_PINN.ipynb```
 - A harmonic oscillator in 1d with non-zero initial phase, DSM and PINN: ```1d_oscillator_non_zero_phase_DSM.ipynb```, ```1d_oscillator_non_zero_phase_PINN.ipynb```
