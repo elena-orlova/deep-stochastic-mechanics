@@ -8,7 +8,7 @@ $$
 
 We use this $\Psi_0(x) = (\frac{\omega}{\pi h})^{d/4} e^{\frac{- \omega x^2}{2h}}$ as the initial condition. If there is no interaction term in the potential, the particle system should stay the same (so, for example, X_i mean and variance are the same over $t$). 
 
-If we add an interaction term to the potential $V(x) = 0.5 m \omega^2 x^2 + 0.5 * \frac{ g}{\sqrt{2 \pi s_2}} \exp(-0.5(x1 - x2)^2 / s_2).$ $g$ defines the strength of the interaction. In this case, the particle system starts from the ground state mentioned above but there is dynamics (it changes over time). 
+If we add an interaction term to the potential $V(x) = 0.5 m \omega^2 x^2 + 0.5 * \frac{ g}{\sqrt{2 \pi s_2}} \exp(-0.5(x_1 - x_2)^2 / s_2).$ $g$ defines the strength of the interaction. In this case, the particle system starts from the ground state mentioned above but there is dynamics (it changes over time). 
 
 ### Code
 
