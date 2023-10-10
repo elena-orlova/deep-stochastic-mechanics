@@ -31,9 +31,10 @@ class NN_new(nn.Module):
 
     def forward(self, x, t):
         x, idx_sorted = x.sort(dim=1)
+        _, inv_idx = idx_sorted.sort(dim=1)
         out = torch.hstack((x, t))
         out = self.out(self.middle(self.start(out)))
-        res = torch.take_along_dim(out, idx_sorted, 1)
+        res = torch.take_along_dim(out, inv_idx, dim=1)
         return res
 
 class NN_connect(nn.Module):
@@ -62,6 +63,7 @@ class NN_new_invariant(nn.Module):
     def forward(self, x, t):
         # print(x)
         x, idx_sorted = x.sort(dim=1)
+        _, inv_idx = idx_sorted.sort(dim=1)
         # print("After sorting")
         # print(x)
         out = torch.hstack((x, t))
@@ -71,8 +73,7 @@ class NN_new_invariant(nn.Module):
         out = self.fc4(out)
         # print("NN out")
         # print(out)
-        # TODO: works only for d=2
-        res = torch.take_along_dim(out, idx_sorted, 1)
+        res = torch.take_along_dim(out, inv_idx, 1)
         # print("After de-sorting")
         # print(res)
         return res
@@ -169,7 +170,7 @@ def train_dsm_interact(net_u, net_v,
                        mu=0, sig2=1,
                        m=1, h=1, T=1,
                        g=1,
-                       flip=False,
+                    #    flip=False,
                        scheduler=None,
                        epoch_start = 0,
                        ):
@@ -180,9 +181,10 @@ def train_dsm_interact(net_u, net_v,
     N_fast = N
     omega = np.sqrt(omega2)
 
+    print('g = {}'.format(g))
     with tqdm(range(epoch_start, n_iter), unit="iter") as tepoch:
         for tau in tepoch:
-            if tau > 0 and (tau % 10 ==0 or tau == n_iter-1):
+            if tau > 0 and (tau % 50 ==0 or tau == n_iter-1) and len(losses):
                 PATH_check = os.path.join(path, 'net_uv_{}_ep_interact_check.pt'.format(n_iter))
                 LOSS, LOSS_NL, LOSS_SM, LOSS_IC = losses[-1], losses_newton[-1], losses_sm[-1], losses_init[-1]
 
@@ -219,7 +221,7 @@ def train_dsm_interact(net_u, net_v,
                     else:
                         X_prev = X_i.clone().to(device) # X_{i-1}
 
-                    t_i = time_splits[i].clone()
+                    # t_i = time_splits[i].clone()
 
                     t_prev_batch = time_transform(t_prev).expand(batch_size, 1).to(device).clone()
                     X_i = torch.Tensor(X_prev).to(device) + T / N * (net_u(X_prev, t_prev_batch) + \
@@ -286,9 +288,9 @@ def train_dsm_interact(net_u, net_v,
                 Xs_all = Xs_all.reshape(batch_size*(N+1), d)
                 X_0_all = X_0_all.reshape(batch_size, d)
 
-                if flip:
-                    idx_flip = np.random.choice(Xs_all.shape[0], Xs_all.shape[0]//2, replace=False)
-                    Xs_all[idx_flip, :] = torch.flip(Xs_all[idx_flip, :], dims=(1, ))
+                # if flip:
+                #     idx_flip = np.random.choice(Xs_all.shape[0], Xs_all.shape[0]//2, replace=False)
+                #     Xs_all[idx_flip, :] = torch.flip(Xs_all[idx_flip, :], dims=(1, ))
 
                 Xs_all.requires_grad = True
                 X_0_all.requires_grad = True
@@ -404,9 +406,9 @@ def train_dsm_interact(net_u, net_v,
                 Xs_all = Xs_all.reshape(batch_size*(N+1), d)
                 X_0_all = X_0_all.reshape(batch_size, d)
 
-                if flip:
-                    idx_flip = np.random.choice(Xs_all.shape[0], Xs_all.shape[0]//2, replace=False)
-                    Xs_all[idx_flip, :] = torch.flip(Xs_all[idx_flip, :], dims=(1, ))
+                # if flip:
+                #     idx_flip = np.random.choice(Xs_all.shape[0], Xs_all.shape[0]//2, replace=False)
+                #     Xs_all[idx_flip, :] = torch.flip(Xs_all[idx_flip, :], dims=(1, ))
                 Xs_all.requires_grad = True
                 X_0_all.requires_grad = True
 
@@ -500,7 +502,7 @@ def sample_w_nn(net_u, net_v, N, d, time_splits, device, mu, sig2, T, m=1, h=0.1
             X_prev = X_0.clone()
             eps = [np.random.multivariate_normal(np.zeros(d), np.eye(d), samples) for i in range(N)]
             for i in range(1, N+1):
-                a = torch.hstack((X_prev, time_splits[i-1].expand(samples, 1).to(device)))
+                # a = torch.hstack((X_prev, time_splits[i-1].expand(samples, 1).to(device)))
                 X_i = torch.Tensor(X_prev).to(device) + T / N * \
                 (nu_s * net_u(X_prev, time_splits[i-1].expand(samples, 1).to(device)) \
                 + net_v(X_prev, time_splits[i-1].expand(samples, 1).to(device))) \

@@ -6,13 +6,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 from qmsolve import Hamiltonian, TwoBosons, TimeSimulation
 
-def V_x_i(x, device, m=1, g=1, om=1, s2=0.1): # grad of V(x)
+def V_x_i(x, device, m=1, g=1, om=1, s2=0.1): # grad of V(x) for DSM loss
     return om * m * x - g/np.sqrt(2*np.pi*s2)*0.5/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*(x[:, 0]-x[:, 1])**2 / s2),
-                                                       torch.matmul(x, torch.Tensor([[1, -1], [-1, 1]]).to(device)))
-
-
-def V_x_i_new(x, device, m=1, g=1, om=1, s2=0.1): # grad of V(x)
-    return om * m * x - g/np.sqrt(2*np.pi*s2)/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*(x[:, 0]-x[:, 1])**2 / s2),
                                                        torch.matmul(x, torch.Tensor([[1, -1], [-1, 1]]).to(device)))
 
 
@@ -78,7 +73,7 @@ def numerical_sol(spatial_dim, spatial_num, N=1000, g=1, T=1.5, omega2=1, m=1, d
     total_time = T
     sim_inter = TimeSimulation(hamiltonian = H_interact, method = "crank-nicolson")
     sim_inter.run(init_ground_state, total_time = total_time, dt = total_time/N,
-                store_steps = 1000)
+                store_steps = N)
 
     return sim_inter
 
@@ -97,7 +92,7 @@ def make_loss_plot(losses, losses_sm, losses_newton, losses_init, path):
     plt.savefig(os.path.join(path, 'losses_train.jpg'), bbox_inches='tight', dpi=300)
 
 
-def make_stat_plots(mean_trials, var_trials, time_splits, path, d=2):
+def make_stat_plots(mean_trials, var_trials, time_splits, path, d=2, sve=True):
     fig, axs = plt.subplots(d, 2)
     fig.set_size_inches(8, 7)
     x = time_splits.numpy()
@@ -145,11 +140,11 @@ def make_stat_plots(mean_trials, var_trials, time_splits, path, d=2):
     # axs[i, 1].set_title('$X_i$ variance')
     axs[i, 1].set_xlabel('$t_i$')
     axs[i, 1].legend()
+    if save:
+        plt.savefig(os.path.join(path, 'stats_train.png'), bbox_inches='tight', dpi=300)
 
-    plt.savefig(os.path.join(path, 'stats_train.png'), bbox_inches='tight', dpi=300)
 
-
-def make_stat_plots_compare(mean_trials, var_trials, bmeans, bstds, time_splits, path, d=2):
+def make_stat_plots_compare(mean_trials, var_trials, bmeans, bstds, time_splits, path, d=2, save=True):
     fig, axs = plt.subplots(d, 2)
     fig.set_size_inches(8, 7)
     x = time_splits.numpy()
@@ -204,10 +199,12 @@ def make_stat_plots_compare(mean_trials, var_trials, bmeans, bstds, time_splits,
     axs[i, 1].set_xlabel('$t_i$')
     axs[i, 1].legend()
 
-    plt.savefig(os.path.join(path, 'stats_train_compare.png'), bbox_inches='tight', dpi=300)
+    if save:
+        plt.savefig(os.path.join(path, 'stats_train_compare.png'), bbox_inches='tight', dpi=300)
 
 
-def make_density_plot(p, path, low_bound=[-2.0, 0.0], up_bound=[2.0, 1.5], title='Plot title', vmin_max = [0, 2]):
+def make_density_plot(p, path, low_bound=[-2.0, 0.0], up_bound=[2.0, 1.5], 
+                      title='Plot title', vmin_max = [0, 2], save=True):
     vmin_, vmax_ = vmin_max
     fig, ax = plt.subplots(1, 1) #newfig(1.0, 0.9)
     ax.remove()
@@ -228,4 +225,11 @@ def make_density_plot(p, path, low_bound=[-2.0, 0.0], up_bound=[2.0, 1.5], title
         img_title = 'density_img_{}_{}.pdf'.format("x2", "pred")
     elif "truth" in title:
         img_title = 'density_img_{}.pdf'.format("truth")
-    plt.savefig(os.path.join(path, img_title), bbox_inches='tight', dpi=300)
+    else:
+        img_title = 'dens_plot_{}.pdf'.format(np.random.randn(1))
+    
+    if save:
+        plt.savefig(os.path.join(path, img_title), bbox_inches='tight', dpi=300)
+        img_title = img_title[:-3] + 'png'
+        plt.savefig(os.path.join(path, img_title), bbox_inches='tight', dpi=300)
+    

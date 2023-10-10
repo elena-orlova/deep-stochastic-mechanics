@@ -18,7 +18,7 @@ echo "    CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}"
 # This command tells which installation of python the script is calling. Also helpful for debugging.
 which python
 
-python train-DSM-interact-2particles-invariant.py \
+python train-DSM-interact-2particles.py \
 -T 1 \
 -N 1000 \
 -omega2 1 \
@@ -35,5 +35,5 @@ python train-DSM-interact-2particles-invariant.py \
 -dim_hid 300 \
 -scheduler 0 \
 -models_dir "perm_invariant" \
--eval \
+# -eval \
 #-resume \

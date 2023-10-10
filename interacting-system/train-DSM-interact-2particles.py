@@ -30,6 +30,8 @@ def setup_args() -> argparse.Namespace:
     parser.add_argument('-N', type=int, default=1000, help="Split [0, T] in N steps")
     parser.add_argument('-omega2', type=float, default=1, help="Omega^2 for harm oscillator")
     parser.add_argument('-g', type=float, default=2, help="g defines interaction strength")
+    parser.add_argument('-d', type=int, default=2, help="number of 1d particles")
+    parser.add_argument('-multi_gpu', type=int, default=0, help="use DataParallel?")
 
     parser.add_argument('-n_epochs', type=int, default=1000, help="Number of epochs")
     parser.add_argument('-batch', type=int, default=100, help="Batch size")
@@ -41,7 +43,7 @@ def setup_args() -> argparse.Namespace:
     parser.add_argument('-beta', type=float, default=1, help="Beta weight")
     parser.add_argument('-gamma', type=float, default=1, help="Gamma weight")
     parser.add_argument('-dim_hid', type=int, default=500, help="Number of epochs")
-    parser.add_argument('-flip_x', type=int, default=0, choices=[0, 1], help="Randomly flip inputs?")
+    # parser.add_argument('-flip_x', type=int, default=0, choices=[0, 1], help="Randomly flip inputs?")
     parser.add_argument('-scheduler', type=int, default=0, choices=[0, 1], help="Use lr scheduler?")
     parser.add_argument('-nn_architecture', type=int, default=0, help="nn_architecture")
 
@@ -56,7 +58,7 @@ def setup_args() -> argparse.Namespace:
     return arguments
 
 def main(args: argparse.Namespace) -> None:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info("Computing on device: {}".format(device))
 
@@ -71,43 +73,59 @@ def main(args: argparse.Namespace) -> None:
     # sampling parameters for X_0
     sig2 = np.sqrt(h/(2*m*omega))
     mu = 0
-    d = 2 # dim or num particles (we have two 2d particles)
+    d = args.d # dim or num particles (we have two 1d particles)
 
     time_splits = torch.Tensor(np.linspace(0, T, N+1))
 
-    flip = False
-    if args.flip_x == 1:
-        flip = True
+    # flip = False
+    # if args.flip_x == 1:
+    #     flip = True
 
     dim_inp = d + 1
     dim_out = d
     resample_frac_1 = args.resample_factor_1
     resample_frac_2 = args.resample_factor_2
-    if args.models_dir == "":
-        models_dir="dsm_harm_osc_interact_g={}_hdim={}_eps={}_t={}_batch={}_lr={}_N={}_T={}_frac={}_{}_flip={}".format(g, args.dim_hid, args.n_epochs, args.epoch_threshold,
-                                                                                 args.batch, args.lr, args.N, args.T, resample_frac_1, resample_frac_2, flip)
+    if d == 2:
+        if args.models_dir == "":
+            models_dir="dsm_harm_osc_interact_g={}_T={}_hdim={}_eps={}_t={}_batch={}_lr={}_N={}_frac={}_{}".format(g, T, args.dim_hid, args.n_epochs, args.epoch_threshold,
+                                                                                    args.batch, args.lr, args.N,resample_frac_1, resample_frac_2)
+        else:
+            models_dir="dsm_harm_osc_interact_g={}_T={}_hdim={}_eps={}_t={}_batch={}_lr={}_N={}_frac={}_{}_{}".format(g, T, args.dim_hid, args.n_epochs, args.epoch_threshold,
+                                                                                    args.batch, args.lr, args.N, resample_frac_1, resample_frac_2, args.models_dir)
     else:
-        models_dir="dsm_harm_osc_interact_g={}_hdim={}_eps={}_t={}_batch={}_lr={}_N={}_T={}_frac={}_{}_flip={}_{}".format(g, args.dim_hid, args.n_epochs, args.epoch_threshold,
-                                                                                 args.batch, args.lr, args.N, args.T, resample_frac_1, resample_frac_2, flip, args.models_dir)
+        if args.models_dir == "":
+            models_dir="dsm_harm_osc_interact_d={}_g={}_T={}_hdim={}_eps={}_t={}_batch={}_lr={}_N={}_frac={}_{}".format(d, g, T, args.dim_hid, args.n_epochs, args.epoch_threshold,
+                                                                                    args.batch, args.lr, args.N, resample_frac_1, resample_frac_2)
+        else:
+            models_dir="dsm_harm_osc_interact__d={}_g={}_T={}_hdim={}_eps={}_t={}_batch={}_lr={}_N={}_frac={}_{}_{}".format(d, g, T, args.dim_hid, args.n_epochs, args.epoch_threshold,
+                                                                                    args.batch, args.lr, args.N, resample_frac_1, resample_frac_2, args.models_dir)
+    
     dim_hid = args.dim_hid
     models_dir = models_dir + '_{}'.format(args.nn_architecture)
 
     if args.nn_architecture == 0:
         print('normal')
-        net_u = NN_old(dim_inp, dim_hid, dim_out).to(device)
-        net_v = NN_old(dim_inp, dim_hid, dim_out).to(device)
+        net_u = NN_old(dim_inp, dim_hid, dim_out)
+        net_v = NN_old(dim_inp, dim_hid, dim_out)
     elif args.nn_architecture == 1:
         print('skip invariant')
-        net_u = NN_new(dim_inp, dim_hid, dim_out).to(device)
-        net_v = NN_new(dim_inp, dim_hid, dim_out).to(device)
+        net_u = NN_new(dim_inp, dim_hid, dim_out)
+        net_v = NN_new(dim_inp, dim_hid, dim_out)
     elif args.nn_architecture == 2:
         print('normal invariant')
-        net_u = NN_new_invariant(dim_inp, dim_hid, dim_out).to(device)
-        net_v = NN_new_invariant(dim_inp, dim_hid, dim_out).to(device)
+        net_u = NN_new_invariant(dim_inp, dim_hid, dim_out)
+        net_v = NN_new_invariant(dim_inp, dim_hid, dim_out)
     elif args.nn_architecture == 3:
         print('skip')
-        net_u = NN_connect(dim_inp, dim_hid, dim_out).to(device)
-        net_v = NN_connect(dim_inp, dim_hid, dim_out).to(device)
+        net_u = NN_connect(dim_inp, dim_hid, dim_out)
+        net_v = NN_connect(dim_inp, dim_hid, dim_out)
+
+    if args.multi_gpu:
+        logger.info("Running on multiGPU {}".format(torch.cuda.device_count()))
+        net_u = nn.DataParallel(net_u)
+        net_v = nn.DataParallel(net_v)
+    net_u.to(device)
+    net_v.to(device)
 
     for x in [args.train_results_dir, os.path.join(args.train_results_dir, models_dir)]:
         if not os.path.isdir(x):
@@ -141,12 +159,13 @@ def main(args: argparse.Namespace) -> None:
         # load the criterion
         criterion = checkpoint['loss_criterion']
         # criterion = nn.MSELoss()
-        old_loss, old_newton, old_sm, old_init = checkpoint['loss'], checkpoint['loss_nl'], checkpoint['loss_sm'], checkpoint['loss_ic']
+        # old_loss, old_newton, old_sm, old_init = checkpoint['loss'], checkpoint['loss_nl'], checkpoint['loss_sm'], checkpoint['loss_ic']
         logger.info('Trained model loss function loaded...')
         logger.info(f"Previously trained for {epochs_old} number of epochs...")
         # train for more epochs
         n_iter = args.n_epochs
         logger.info(f"Train for {n_iter} more epochs...")
+        optimizer.param_groups[0]['lr'] = learning_rate
 
     if not args.eval:
         criterion = nn.MSELoss()
@@ -163,8 +182,8 @@ def main(args: argparse.Namespace) -> None:
                                                                                      frac_1=resample_frac_1, frac_2=resample_frac_2,
                                                                                      omega2=omega, mu=mu, sig2=sig2,
                                                                                      m=m, h=h, T=T,
-                                                                                     g = g,
-                                                                                     flip=flip, scheduler=scheduler,
+                                                                                     g = g, d=d,
+                                                                                     scheduler=scheduler,
                                                                                      epoch_start = epochs_old,
                                                                                      )
         logger.info('Done training...')
@@ -185,36 +204,37 @@ def main(args: argparse.Namespace) -> None:
         var_trials[trial] = X_test[trial].var(axis=1)
 
     # numerical solution
-    logger.info('Start numerical sol...')
-    spatial_dim = 1.5
-    spatial_num = 100
-    x = np.linspace(-spatial_dim, spatial_dim, spatial_num)
-    dx = 2 * spatial_dim / spatial_num
+    if d == 2:
+        logger.info('Start numerical solution...')
+        spatial_dim = 1.5
+        spatial_num = 100
+        x = np.linspace(-spatial_dim, spatial_dim, spatial_num)
+        dx = 2 * spatial_dim / spatial_num
 
-    lb = np.array([-spatial_dim, 0.0])
-    ub = np.array([spatial_dim, T])
+        lb = np.array([-spatial_dim, 0.0])
+        ub = np.array([spatial_dim, T])
 
-    sim_inter = numerical_sol(spatial_dim, spatial_num, N=N, g=g, T=T, omega2=omega2, m=m , d=d, h=h)
+        sim_inter = numerical_sol(spatial_dim, spatial_num, N=N, g=g, T=T, omega2=omega2, m=m , d=d, h=h)
 
-    prob_density_inter = np.abs(sim_inter.Ψ)**2 * dx
-    density_truth_x1 = prob_density_inter.sum(axis=1).T
-    # density_truth_x2 = prob_density_inter.sum(axis=2).T
+        prob_density_inter = np.abs(sim_inter.Ψ)**2 * dx
+        density_truth_x1 = prob_density_inter.sum(axis=1).T
+        density_truth_x2 = prob_density_inter.sum(axis=2).T
 
-    # make_density_plot(density_truth_x2, path_to_save, low_bound=lb, up_bound=ub,
+        # make_density_plot(density_truth_x2, path_to_save, low_bound=lb, up_bound=ub,
                       # title='$|\Psi(x_2, t)|^2$ truth')
 
-    sol_t = np.linspace(0, T, N+1)
-    bmeans1_inter = []
-    bstds1_inter = []
-    ts = []
-    for i, t in enumerate(sol_t):
-        ts.append(t)
-        bmeans1_inter.append(np.dot(x, dx**d * np.abs(np.sum((sim_inter.Ψ[i])*np.conjugate(sim_inter.Ψ[i]), axis=0))))
-        bstds1_inter.append(np.dot((x - bmeans1_inter[-1]) ** 2,
-                                dx**2 * np.abs(np.sum((sim_inter.Ψ[i])*np.conjugate(sim_inter.Ψ[i]), axis=0))))
+        sol_t = np.linspace(0, T, N+1)
+        bmeans1_inter = []
+        bstds1_inter = []
+        ts = []
+        for i, t in enumerate(sol_t):
+            ts.append(t)
+            bmeans1_inter.append(np.dot(x, dx**d * np.abs(np.sum((sim_inter.Ψ[i])*np.conjugate(sim_inter.Ψ[i]), axis=0))))
+            bstds1_inter.append(np.dot((x - bmeans1_inter[-1]) ** 2,
+                                    dx**2 * np.abs(np.sum((sim_inter.Ψ[i])*np.conjugate(sim_inter.Ψ[i]), axis=0))))
 
-    # make_stat_plots(mean_trials, var_trials, time_splits, path_to_save, d=d)
-    make_stat_plots_compare(mean_trials, var_trials, bmeans1_inter, bstds1_inter, time_splits, path_to_save, d=d)
+        # make_stat_plots(mean_trials, var_trials, time_splits, path_to_save, d=d)
+        make_stat_plots_compare(mean_trials, var_trials, bmeans1_inter, bstds1_inter, time_splits, path_to_save, d=d)
 
     n_bins = 100 #len(x)
     p = np.zeros((d, len(time_splits), n_bins))
@@ -223,16 +243,23 @@ def main(args: argparse.Namespace) -> None:
             p[j, i, :] = np.histogram(X_test[:, i, :, j].reshape(-1),
                                 density=True, bins=n_bins, range=(lb[0], ub[0]))[0]
 
-    density_pred_x1 = p[0].T
-    density_pred_x2 = p[1].T
 
-    v_max_ = round(max(np.max(density_truth_x1.reshape(-1)), np.max(density_pred_x1.reshape(-1)), np.max(density_pred_x2.reshape(-1))) + 0.1, 1)
-    make_density_plot(density_truth_x1,path_to_save,  low_bound=lb, up_bound=ub,
-                      title='$|\Psi(x_{i}, t)|^2, i = 1, 2$ truth', vmin_max = [0, v_max_])
-    make_density_plot(density_pred_x1, path_to_save, low_bound=lb, up_bound=ub,
-                      title='$|\Psi(x_1, t)|^2$ prediction', vmin_max = [0, v_max_])
-    make_density_plot(density_pred_x2, path_to_save, low_bound=lb, up_bound=ub,
-                      title='$|\Psi(x_2, t)|^2$ prediction', vmin_max = [0, v_max_])
+    if d == 2:
+        density_pred_x1 = p[0].T
+        density_pred_x2 = p[1].T
+        v_max_ = round(max(np.max(density_truth_x1.reshape(-1)), np.max(density_pred_x1.reshape(-1)), np.max(density_pred_x2.reshape(-1))) + 0.1, 1)
+        make_density_plot(density_truth_x1,path_to_save,  low_bound=lb, up_bound=ub,
+                        title='$|\Psi(x_{i}, t)|^2, i = 1, 2$ truth', vmin_max = [0, v_max_])
+        make_density_plot(density_pred_x1, path_to_save, low_bound=lb, up_bound=ub,
+                        title='$|\Psi(x_1, t)|^2$ prediction', vmin_max = [0, v_max_])
+        make_density_plot(density_pred_x2, path_to_save, low_bound=lb, up_bound=ub,
+                        title='$|\Psi(x_2, t)|^2$ prediction', vmin_max = [0, v_max_])
+    else: 
+        for i in range(d):
+            density_pred = p[i].T
+            v_max_ = round(max(np.max(density_pred.reshape(-1))) + 0.1, 1)
+            make_density_plot(density_pred, path_to_save, low_bound=lb, up_bound=ub,
+                            title='$|\Psi(x_i, t)|^2$ prediction, i = {}'.format(i+1), vmin_max = [0, v_max_])
 
     logger.info("Finished")
 
