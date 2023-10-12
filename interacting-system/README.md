@@ -24,4 +24,4 @@ To run PINN:
 python interacting_PINN.py
 ```
 
-
+We use qmsolve lib as a numerical solver, but it requires to change some constants in the library: open constants file in your system (for example, `vim env_python/lib/python3.8/site-packages/qmsolve/util/constants.py`), and change them as they're provided here (see file `constants.py` in this repo).
