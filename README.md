@@ -4,13 +4,13 @@ DSM [paper](https://arxiv.org/abs/2305.19685) code.
 
 ## Code
 
-There are the following notebooks: 
-- An experiment with a singular initial condition: ```1d_singular_DSM.ipynb``` 
-- A harmonic oscillator in 1d with zero initial phase, DSM and PINN: ```1d_oscillator_zero_phase_DSM.ipynb```, ```1d_oscillator_zero_phase_PINN.ipynb```
-- A harmonic oscillator in 1d with non-zero initial phase, DSM and PINN: ```1d_oscillator_non_zero_phase_DSM.ipynb```, ```1d_oscillator_non_zero_phase_PINN.ipynb```
-- A harmonic oscillator in 3d: ```3d_oscillator_zero_phase_DSM.ipynb```
+ - ```interacting-system``` folder is for interacting bosons in a harmonic oscillator (cthe ode uses torch.jit).
+ - ```non-interacting-system``` folder is for non-interacting bosons in a harmonic oscillator (cthe ode uses torch.jit).
+ - ```notebooks``` folder have notebooks for some experiments. Note that this code version does not use torch.jit.
 
 ## Prerequisites
+
+See more details in every folder, but in general:
 
 - Python 3.3+
 - torch==1.13.1
