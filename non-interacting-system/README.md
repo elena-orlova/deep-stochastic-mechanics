@@ -5,16 +5,13 @@ We have $d$ 1-dimensional non-interacting bosons in a harmonic oscillator. In th
 ##### Zero initial phase
 We consider a harmonic oscillator model with 
 $x\in\mathbb{R}^{1}$, 
-$V (x) = \frac{1}{2}m\omega^2(x - 0.1)^2$,   
-$t\in [0, 1]$ and where $m=1$ and $\omega=1$. The initial wave function is given as $\psi(x, 0) \propto e^{-x^2/(4\sigma^2)}$. Then $$u_0(x) = -\frac{h x}{2 m \sigma^2} $, $
-${  v}_0(x) \equiv 0$. $X(0)$ comes from $X(0) \sim \mathcal{N}(0, \sigma^2),$ where $\sigma^2 = 0.1$. 
+$V (x) = \frac{1}{2}m\omega^2(x - 0.1)^2$, $t\in [0, 1]$ and where $m=1$ and $\omega=1$. The initial wave function is given as $\psi(x, 0) \propto e^{-x^2/(4\sigma^2)}$. Then $u_0(x) = -\frac{h x}{2 m \sigma^2}$, ${v}_0(x) \equiv 0$. $X(0)$ comes from $X(0) \sim \mathcal{N}(0, \sigma^2),$ where $\sigma^2 = 0.1$. 
 
 ##### Non-zero initial phase
 
-We also consider a non-zero initial phase $S_0(x) = -5x$. It corresponds to the initial impulse of a particle.
-Then ${v}_0(x) \equiv -\frac{5\hbar}{m}$.
+We also consider a non-zero initial phase $S_0(x) = -5x$. It corresponds to the initial impulse of a particle. Then ${v}_0(x) \equiv -\frac{5\hbar}{m}$.
 
-To define the initial  phase coefficient $S_0(x) = cx$ (including 0), use an argument `-init_phase -5` in the commend line.
+To define the initial  phase coefficient $S_0(x) = cx$ (including $c=0$), use an argument `-init_phase -5` in the commend line.
 
 ### Code
 
