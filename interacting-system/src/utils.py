@@ -6,71 +6,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 from qmsolve import Hamiltonian, TwoBosons, TimeSimulation
 
-# @torch.jit.script 
-# def V_x_i_old(x, device, m=1, g=1, om=1, s2=0.1): # grad of V(x) for DSM loss
-#     return om * m * x - g/torch.sqrt(2*3.1415927410125732*s2)*0.5/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*(x[:, 0]-x[:, 1])**2 / s2),
-#                                                        torch.matmul(x, torch.Tensor([[1, -1], [-1, 1]], device=device)))
-
-# @torch.jit.script 
-# def V_x_i(x:torch.Tensor, device:torch.device, m:float=1, g:float=1, om:float=1, s2:float=0.1): # grad of V(x) for DSM loss
-    # return om * m * x - g/torch.sqrt(2*3.1415927410125732*s2)*0.5/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*(x[:, 0]-x[:, 1])**2 / s2),
-    #                                                    x.shape[1] * x - torch.einsum("ki -> k", x)[:, None])
-
-
-# @torch.jit.script 
-# def grad_V_x_i(x:torch.Tensor, device:torch.device, m:float=1, g:float=1, om:float=1, s2:float=0.1): # grad of V(x) for DSM loss
-#     C = g/torch.sqrt(2*3.1415927410125732*s2)*0.5
-#     return om * m * x - C/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*( x.shape[1] * torch.einsum("ki, ki -> k", x, x) - \
-#                                                                                                   torch.einsum("ki, kj -> k", x, x)) / s2),
-#                                                         x.shape[1] * x - torch.einsum("ki -> k", x)[:, None])
-
-
-# @torch.jit.script 
-# def V_x_i(x:torch.Tensor, device:torch.device, m:float=1, g:float=1, om:float=1, s2:float=0.1): # grad of V(x) for DSM loss
-#     C = g/torch.sqrt(2*3.1415927410125732*s2)*0.5
-#     return om * m * x - C/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*(2 * torch.einsum("ki, ki -> k", x, x) - \
-#                                                                             torch.einsum("ki, kj -> k", x, x)) / s2),
-#                                                        x - torch.einsum("ki -> k", x)[:, None])
-
 @torch.jit.script 
 def V_x_i(x:torch.Tensor, device:torch.device, d:int, m:float=1, 
-                   g:float=1, om:float=1, s2:float=0.1): # grad of V(x) for DSM loss
-    if d == 2:
-        # #EXPLICIT FOR 2 particles
-        # x1 = x[:, 0] 
-        # x2 = x[:, 1]
-        # C = 0.5* g/torch.sqrt(2*3.1415927410125732*s2)
-        # grad_1 = (om * m * x1 - (C/s2) * torch.exp(-0.5*(x1 - x2)**2 / s2) * (x1 - x2))[:, None]
-        # grad_2 = (om * m * x2 + (C/s2) * torch.exp(-0.5*(x1 - x2)**2 / s2) * (x1 - x2))[:, None]
-        # res = torch.hstack((grad_1, grad_2))
-        
-        # #another option
-        # res = om * m * x - g/torch.sqrt(2*3.1415927410125732*s2)*0.5/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*(x[:, 0]-x[:, 1])**2 / s2),
-        #                                                torch.matmul(x, torch.tensor([[1, -1], [-1, 1]], device=device).float()))
-        
-        C = g/torch.sqrt(2*3.1415927410125732*s2)*0.5
-        return om * m * x - C/s2*torch.einsum("i,ij->ij", torch.exp(-0.5*(2 * torch.einsum("ki, ki -> k", x, x) - \
-                                                                        torch.einsum("ki, kj -> k", x, x)) / s2),
-                                                       2*x - torch.einsum("ki -> k", x)[:, None])
-    elif d == 3:
-        # !!THIS WORKS FOR 3 1D PARTICLES ONLY!!
-        # TO DO: generalize to any num of particles
-        x1 = x[:, 0] 
-        x2 = x[:, 1]
-        x3 = x[:, 2]
-        C = 0.5* g/torch.sqrt(2*3.1415927410125732*s2)
-        grad_1 = (om * m * x1 - (C/s2) * torch.exp(-0.5*(x1 - x2)**2 / s2) * (x1 - x2) - \
-                (C/s2) * torch.exp(-0.5*(x1 - x3)**2 / s2) * (x1 - x3))[:, None]
-        
-        grad_2 = (om * m * x2 + (C/s2) * torch.exp(-0.5*(x1 - x2)**2 / s2) * (x1 - x2) - \
-                (C/s2) * torch.exp(-0.5*(x2 - x3)**2 / s2) * (x2 - x3))[:, None]
-        
-        grad_3 = (om * m * x3 + (C/s2) * torch.exp(-0.5*(x1 - x3)**2 / s2) * (x1 - x3) + \
-                (C/s2) * torch.exp(-0.5*(x2 - x3)**2 / s2) * (x2 - x3))[:, None]
-        return torch.hstack((grad_1, grad_2, grad_3))
-
-    else: 
-        print("NOT IMPLEMENTED")
+                   g:float=1, om:float=1, s2:float=0.1): # grad V for DSM loss
+    # X has shape (batch, particles*dim), dim=1 usually
+    C = 0.5*g/torch.sqrt(2*3.1415927410125732*s2)
+    xv = x[:, :, None].expand(-1, -1, x.shape[-1])
+    return om * m * x + C/s2*torch.einsum("kij,kij->kj", torch.exp(-0.5*torch.square(xv - xv.mT) / s2), xv-xv.mT)
 
 
 @torch.jit.script
@@ -81,12 +23,6 @@ def v_0(x:torch.Tensor, h:float=0.1, m:float=1):
 @torch.jit.script
 def u_0(x:torch.Tensor, om:float=1):
     return -om * x
-    
-
-# @torch.jit.script
-# def time_transform(t:torch.Tensor):
-#     # N_fast = min(N,  tau * K + 1), K=1, 2, 3...
-#     return t #1.0 / (1.0 + t)
 
 
 def V_noninteract(x1, x2, omega2):
@@ -137,7 +73,6 @@ def numerical_sol(spatial_dim, spatial_num, N=1000, g=1, T=1, omega2=1, m=1, d=2
     sim_inter = TimeSimulation(hamiltonian = H_interact, method = "crank-nicolson")
     sim_inter.run(init_ground_state, total_time = total_time, dt = total_time/N,
                 store_steps = N)
-
     return sim_inter
 
 
@@ -161,46 +96,34 @@ def make_stat_plots(mean_trials, var_trials, time_splits, path, d=2, sve=True):
     x = time_splits.numpy()
 
     i = 0
-    # axs[0, 0].plot(x, bmeans, color='black', linestyle='--', label='truth', linewidth=1)
     axs[0, 0].plot(x, mean_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=1)
     axs[0, 0].fill_between(x, mean_trials[:, :, i].mean(axis=0) - mean_trials[:, :, i].std(axis=0),
                         mean_trials[:, :, i].mean(axis=0) + mean_trials[:, :, i].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
-    # axs[0, 0].plot(x, bmeans_pinn, color='seagreen', label='PINN', linewidth=0.8)
     axs[0, 0].set_ylabel('particle 1 value')
-    # axs[0, 0].set_xlabel('$t_i$')
     axs[0, 0].legend()
     axs[0, 0].set_title('$X_i$ mean')
 
-    # axs[i, 1].plot(x, bstds, color='black', linestyle='--', label='truth', linewidth=1)
     axs[i, 1].plot(x, var_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=1)
     axs[i, 1].fill_between(x, var_trials[:, :, i].mean(axis=0) - 2*var_trials[:, :, i].std(axis=0),
                         var_trials[:, :, i].mean(axis=0) + 2*var_trials[:, :, i].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
-    # axs[i, 1].plot(x, bstds_pinn, color='seagreen', label='PINN', linewidth=0.8)
     axs[i, 1].set_title('$X_i$ variance')
-    # axs[i, 1].set_xlabel('$t_i$')
     axs[i, 1].legend()
 
     i = 1
-    # axs[1, 0].plot(x, bmeans, color='black', linestyle='--', label='truth', linewidth=1)
     axs[1, 0].plot(x, mean_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=1)
     axs[1, 0].fill_between(x, mean_trials[:, :, i].mean(axis=0) - mean_trials[:, :, i].std(axis=0),
                         mean_trials[:, :, i].mean(axis=0) + mean_trials[:, :, i].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
-    # axs[i, 0].plot(x, bmeans_pinn, color='seagreen', label='PINN', linewidth=0.8)
     axs[i, 0].set_ylabel('particle 2 value')
     axs[i, 0].set_xlabel('$t_i$')
     axs[i, 0].legend()
-    # axs[i, 0].set_title('$X_i$ mean')
-
-    # axs[i, 1].plot(x, bstds, color='black', linestyle='--', label='truth', linewidth=0.8)
+    
     axs[i, 1].plot(x, var_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=0.8)
     axs[i, 1].fill_between(x, var_trials[:, :, i].mean(axis=0) - 3*var_trials[:, :, 0].std(axis=0),
                         var_trials[:, :, i].mean(axis=0) + 3*var_trials[:, :, 0].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
-    # axs[i, 1].plot(x, bstds_pinn, color='seagreen', label='PINN', linewidth=0.8)
-    # axs[i, 1].set_title('$X_i$ variance')
     axs[i, 1].set_xlabel('$t_i$')
     axs[i, 1].legend()
     if save:
@@ -213,52 +136,40 @@ def make_stat_plots_compare(mean_trials, var_trials, bmeans, bstds, time_splits,
     x = time_splits.numpy()
 
     i = 0
-    # axs[0, 0].plot(x, bmeans, color='black', linestyle='--', label='truth', linewidth=1)
     axs[0, 0].plot(x, mean_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=1)
     axs[i, 0].plot(x, bmeans, color='green', label='Truth', linewidth=0.8)
     axs[0, 0].fill_between(x, mean_trials[:, :, i].mean(axis=0) - mean_trials[:, :, i].std(axis=0),
                         mean_trials[:, :, i].mean(axis=0) + mean_trials[:, :, i].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
-    # axs[0, 0].plot(x, bmeans_pinn, color='seagreen', label='PINN', linewidth=0.8)
     axs[0, 0].set_ylabel('particle 1 value')
     axs[0, 0].set_ylim(-0.1, 0.1)
-    # axs[0, 0].set_xlabel('$t_i$')
     axs[0, 0].legend();
     axs[0, 0].set_title('$X_i$ mean')
 
-    # axs[i, 1].plot(x, bstds, color='black', linestyle='--', label='truth', linewidth=1)
     axs[i, 1].plot(x, var_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=1)
     axs[i, 1].plot(x, bstds, color='green', label='Truth', linewidth=0.8)
     axs[i, 1].fill_between(x, var_trials[:, :, i].mean(axis=0) - 2*var_trials[:, :, i].std(axis=0),
                         var_trials[:, :, i].mean(axis=0) + 2*var_trials[:, :, i].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
-    # axs[i, 1].plot(x, bstds_pinn, color='seagreen', label='PINN', linewidth=0.8)
     axs[i, 1].set_title('$X_i$ variance')
-    # axs[i, 1].set_xlabel('$t_i$')
     axs[i, 1].legend();
 
     i = 1
-    # axs[1, 0].plot(x, bmeans, color='black', linestyle='--', label='truth', linewidth=1)
     axs[1, 0].plot(x, mean_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=1)
     axs[1, 0].fill_between(x, mean_trials[:, :, i].mean(axis=0) - mean_trials[:, :, i].std(axis=0),
                         mean_trials[:, :, i].mean(axis=0) + mean_trials[:, :, i].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
     axs[i, 0].plot(x, bmeans, color='green', label='Truth', linewidth=0.8)
     axs[i, 0].set_ylim(-0.1, 0.1)
-    # axs[i, 0].plot(x, bmeans_pinn, color='seagreen', label='PINN', linewidth=0.8)
     axs[i, 0].set_ylabel('particle 2 value')
     axs[i, 0].set_xlabel('$t_i$')
     axs[i, 0].legend()
-    # axs[i, 0].set_title('$X_i$ mean')
 
-    # axs[i, 1].plot(x, bstds, color='black', linestyle='--', label='truth', linewidth=0.8)
     axs[i, 1].plot(x, var_trials[:, :, i].mean(axis=0), color='dodgerblue', label='DSM', linewidth=0.8)
     axs[i, 1].fill_between(x, var_trials[:, :, i].mean(axis=0) - 3*var_trials[:, :, 0].std(axis=0),
                         var_trials[:, :, i].mean(axis=0) + 3*var_trials[:, :, 0].std(axis=0), color='dodgerblue',
                         alpha=0.5, linewidth=0.8)
     axs[i, 1].plot(x, bstds, color='green', label='Truth', linewidth=0.8)
-    # axs[i, 1].plot(x, bstds_pinn, color='seagreen', label='PINN', linewidth=0.8)
-    # axs[i, 1].set_title('$X_i$ variance')
     axs[i, 1].set_xlabel('$t_i$')
     axs[i, 1].legend()
 

@@ -12,9 +12,9 @@ If we add an interaction term to the potential $V(x) = 0.5 m \omega^2 x^2 + 0.5 
 
 ### Code
 
-The DSM training is given in `train-DSM-fast-new.py`. This file runs DSM training, saves trained models, losses plot, samples with trained NNs and makes density plots after training; it also runs the numerical solution (for $d=2$ as qmsolve works for $d=2$ by default) for the specified problem, and saves density and statistics plots. To run it run from the terminal:
+The DSM training is given in `train-DSM.py`. This file runs DSM training, saves trained models, losses plot, samples with trained NNs and makes density plots after training; it also runs the numerical solution (for $d=2$ as qmsolve works for $d=2$ by default) for the specified problem, and saves density and statistics plots. To run it run from the terminal:
 ```
-bash run_dsm_higher_d_new.sh
+bash run_dsm.sh
 ```
 Feel free to play with hyperparameters (for example, running training for -n_epochs=10 epochs to see how it works, -invar=0 to use regular NN architecture).
 

@@ -18,8 +18,8 @@ import time
 import qmsolve
 import json
 
-from src.utils_fast_new import *
-from src.nn_fast_new import *
+from src.utils import *
+from src.nn import *
 torch.backends.cudnn.benchmark = True
 
 

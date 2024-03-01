@@ -18,7 +18,7 @@ echo "    CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}"
 # This command tells which installation of python the script is calling. Also helpful for debugging.
 which python
 
-python train-DSM-fast-new.py \
+python train-DSM.py \
 -T 1.0 \
 -N 1000 \
 -omega2 1.0 \
@@ -29,8 +29,8 @@ python train-DSM-fast-new.py \
 -n_epochs 10000 \
 -nn_architecture 4 \
 -lr 1e-5 \
--train_results_dir "results/results_T1_test_new_V/new_exps_test/" \
--models_dir "multi_d3_arch_4_NEW_V" \
+-train_results_dir "results/" \
+-models_dir "multi_d3" \
 -dim_hid 500 \
 -scheduler 0 \
 -save_freq 100 \

@@ -4,8 +4,8 @@ DSM [paper](https://arxiv.org/abs/2305.19685) code.
 
 ## Code
 
- - ```interacting-system``` folder is for interacting bosons in a harmonic oscillator (cthe ode uses torch.jit).
- - ```non-interacting-system``` folder is for non-interacting bosons in a harmonic oscillator (cthe ode uses torch.jit).
+ - ```interacting-system``` folder is for interacting bosons in a harmonic oscillator (with torch.jit).
+ - ```non-interacting-system``` folder is for non-interacting bosons in a harmonic oscillator (with torch.jit).
  - ```notebooks``` folder have notebooks for some experiments. Note that this code version does not use torch.jit.
 
 ## Prerequisites

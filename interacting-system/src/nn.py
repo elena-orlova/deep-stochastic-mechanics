@@ -4,7 +4,6 @@ from torch.autograd import grad
 from tqdm import tqdm
 import numpy as np
 from src.utils_fast_new import *
-# import pdb
 from typing import List, Optional, cast
 from torch.jit import ScriptModule
 
@@ -367,25 +366,13 @@ def train_dsm_interact(net_u, net_v,
                 exp = torch.sqrt(torch.exp((T-time_splits_batches)) - 1)
                 exp2 = torch.sqrt(torch.exp(2.0*(T-time_splits_batches))-1)
                 L_sm = criterion(exp2*du_dt, exp2*(-(h/(2*m)) * dv_ddx - dvu_dx)) 
-                # print("!!!", V_x_i(Xs_all, device, d, m=m, g=g, om=omega2).shape, du_ddx.shape, d_norm.shape)
-                # L_nl = criterion(exp2*dv_dt, exp2*(d_norm + (h / 2 / m) * du_ddx - V_x_i(Xs_all, device, d, m=m, g=g, om=omega2)/m)) 
                 L_nl = criterion(exp*dv_dt, exp*(d_norm + (h / 2 / m) * du_ddx - V_x_i(Xs_all, device, d, m=m, g=g, om=omega2)/m)) 
-                
-                # L_sm = criterion(du_dt, -(h/(2*m)) * dv_ddx - dvu_dx) 
-                # L_nl = criterion(dv_dt, d_norm + (h / 2 / m) * du_ddx - V_x_i(Xs_all, device, d, m=m, g=g, om=omega2)/m) 
             else:
                 L_sm = criterion(du_dt, -(h/(2*m)) * dv_ddx - dvu_dx) 
-                # print("!!!", V_x_i(Xs_all, device, d, m=m, g=g, om=omega2).shape, du_ddx.shape, d_norm.shape)
-                # print("!!!!", V_x_i(Xs_all, device, d, m=m, g=g, om=omega2).max(),  du_ddx.max(), d_norm.max())
                 L_nl = criterion(dv_dt, d_norm + (h / 2 / m) * du_ddx - V_x_i(Xs_all, device, d, m=m, g=g, om=omega2)/m) 
 
-            # u0_val = u_0(Xs_all[:batch_size], omega)
-            # v0_val = v_0(Xs_all[:batch_size], h=h, m=m)
-            # tss = time_splits_batches[:batch_size]
             L_ic = torch.zeros(1, device=device)
-            # L_ic = criterion(net_u(Xs_all[:batch_size], tss), u0_val) \
-            #          + criterion(net_v(Xs_all[:batch_size], tss), v0_val)
-
+            
             loss = (alpha * L_sm + beta * L_nl + gamma * L_ic) / 2.0
             losses.append(loss.item())
             losses_newton.append(L_nl.item())
