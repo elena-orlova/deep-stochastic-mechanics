@@ -25,3 +25,11 @@ python interacting_PINN.py
 ```
 
 We use qmsolve lib as a numerical solver, but it requires to change some constants in the library: open constants file in your system (for example, `vim env_python/lib/python3.8/site-packages/qmsolve/util/constants.py`), and change them as they're provided here (see file `constants.py` in this repo).
+
+To run t-VMC: 
+
+```
+python tvmc_jastrow_basis.py
+```
+
+For t-VMC implementation, we use the NetKet library. For installation, follow their [instructions](https://netket.readthedocs.io/en/latest/docs/install.html). The variable `N` in the code corresponds to the number of interacting bosons, `n_max` is the number of basis functions, `n_samples` is the number of MC samples per step, `dt` is the step size in time for optimization, `tstops` defines at what time steps to save the model's predictions. 
