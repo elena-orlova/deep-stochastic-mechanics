@@ -9,7 +9,7 @@ Deep Stochastic Mechanics for *d* one-dimensional interacting bosons, with compa
 
 ## 🎯 Physical System
 
-### Non-interacting Case (Reference)
+### Non-interacting Case
 **Harmonic Oscillator Potential:**
 $$V(x) = \frac{1}{2}m\omega^2 x^2$$
 
@@ -25,7 +25,7 @@ $$V(x) = \frac{1}{2}m\omega^2 x^2 + \frac{g}{2\sqrt{2\pi s_2}} \exp\left(-\frac{
 **Key Parameters:**
 - **$g$**: Interaction strength (controls dynamics)
 - **$s_2$**: Interaction range parameter
-- **Initial condition**: Non-interacting ground state $\Psi_0(x)$
+- **Initial condition**: Non-interacting ground state $\Psi_0(x)$ from above
 
 *System behavior*: Non-stationary dynamics due to particle interactions.
 
@@ -59,12 +59,10 @@ python interacting_PINN.py
 python tvmc_jastrow_basis.py
 ```
 
-## ⚙Setup Requirements
+## Setup Requirements
 
 ### Standard Dependencies
 - Python 3.3+, PyTorch 1.13.1, NumPy, SciPy
-
-### Method-Specific Setup
 
 #### For Numerical Comparisons (qmsolve)
 ⚠️ **Important**: Modify qmsolve constants before use:

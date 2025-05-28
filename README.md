@@ -15,17 +15,16 @@ Elena Orlova, Aleksei Ustimenko, Ruoxi Jiang, Peter Y. Lu, Rebecca Willett
 
 ## Overview
 
-Traditional numerical methods for quantum mechanics suffer from exponential scaling with problem dimension. DSM addresses this fundamental limitation by:
+Traditional quantum simulation methods scale exponentially with dimension, making high-dimensional problems intractable. DSM addresses this fundamental limitation by:
+
 
 - **Adaptive Dimensionality**: Leveraging the latent low-dimensional structure of wave functions
 - **Markovian Sampling**: Using diffusion-based sampling to avoid MCMC samoling for every time step
 - **Novel Stochastic Framework**: Introducing new equations for stochastic quantum mechanics with quadratic computational complexity
 - **Deep Learning Integration**: Combining insights from generative diffusion models with quantum simulation
 
-### Key Advantages
-- Computational complexity that scales with latent dimension rather than full problem dimension
-- Quadratic scaling with respect to number of dimensions (vs. exponential in traditional numerical methods)
-- Significant performance improvements over existing deep learning approaches for quantum mechanics
+It leads to significant computational advantages for high-dimensional quantum systems.
+
 
 ## 🗂️ Repository Structure
 
@@ -69,38 +68,18 @@ cd deep-stochastic-mechanics
 pip install torch==1.13.1 tqdm==4.64.1 scipy==1.10.1 numpy==1.24.2
 ```
 
-
-## Getting Started
-
-### Quick Start
-1. Choose your system type (interacting vs. non-interacting bosons)
-2. Navigate to the appropriate folder
-3. Follow the folder-specific setup instructions
-4. Run the provided examples
-
-### For Experimentation
-Start with the `notebooks/` folder for:
-- Interactive demonstrations
-- Parameter exploration
-- Visualization of results
-- Understanding the methodology
-
 ## 🔬 Methodology
 
-DSM introduces a revolutionary approach to quantum simulation by:
+DSM reformulates quantum dynamics through stochastic differential equations, allowing neural networks to learn from particle trajectories rather than gridded wave functions. This approach:
 
-1. **Stochastic Mechanics Framework**: Reformulating quantum dynamics through stochastic differential equations
-2. **Diffusion-Based Sampling**: Using techniques from generative modeling to sample particle trajectories
-3. **Latent Structure Exploitation**: Adapting to the intrinsic low-dimensional manifold of the wave function 
-4. **Deep Neural Networks**: Learning complex quantum dynamics through trainable models
+- Samples trajectories from Markovian diffusion processes
+- Learns dynamics via deep neural networks
+- Scales favorably by adapting to intrinsic dimensionality
+- Bridges generative AI and quantum simulation
 
 ## 📊 Performance
 
-Numerical simulations demonstrate:
-- **Significant computational speedup** over existing deep learning quantum methods
-- **Scalability** to higher-dimensional problems previously intractable
-- **Accuracy preservation** while reducing computational burden
-- **Robust performance** across different quantum system configurations
+Numerical experiments demonstrate significant speedup over existing deep learning quantum methods while maintaining accuracy across different system configurations and dimensions.
 
 
 ## 📚 Citation
