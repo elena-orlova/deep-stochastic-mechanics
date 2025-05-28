@@ -1,35 +1,95 @@
-## Interacting particles
+# Interacting Bosons in Harmonic Oscillator
 
-We have $d$ 1-dimensional bosons (with interaction) in a harmonic oscillator. For the harm oscillator with a potential $V(x) = 0.5 k x^2 = 0.5 m \omega^2 x^2$ (no interaction), the analytical solution is known for one particle in 1d:
+[![Python](https://img.shields.io/badge/Python-3.3+-green)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-orange)](https://pytorch.org/)
+[![Optimized](https://img.shields.io/badge/torch.jit-Optimized-blue)](https://pytorch.org/docs/stable/jit.html)
+[![NetKet](https://img.shields.io/badge/NetKet-t--VMC-purple)](https://netket.readthedocs.io/)
 
-$$
- \Psi_n(x) = \displaystyle \frac{1}{\sqrt{2^n n!}} \Big(\frac{m \omega}{\pi h}\Big)^\frac{1}{4} e^{-\frac{m \omega x^2}{2h}} H_n(\sqrt{\frac{m \omega}{h}}x).
-$$
+Deep Stochastic Mechanics for *d* one-dimensional interacting bosons, with comparisons to PINN and t-VMC methods.
 
-We use this $\Psi_0(x) = (\frac{\omega}{\pi h})^{d/4} e^{\frac{- \omega x^2}{2h}}$ as the initial condition. If there is no interaction term in the potential, the particle system should stay the same (so, for example, the mean position and the variance of $X$ are the same over $t$). 
+## 🎯 Physical System
 
-If we add an interaction term to the potential $V(x) = 0.5 m \omega^2 x^2 + 0.5 * \frac{ g}{\sqrt{2 \pi s_2}} \exp(-0.5(x_1 - x_2)^2 / s_2),$ the system is no longer stationary. The value of $g$ defines the strength of the interaction. In this case, the particle system starts from the ground state given above but there is dynamics (it changes over time). 
+### Non-interacting Case (Reference)
+**Harmonic Oscillator Potential:**
+$$V(x) = \frac{1}{2}m\omega^2 x^2$$
 
-### Code
+**Analytical Ground State:**
+$$\Psi_0(x) = \left(\frac{\omega}{\pi\hbar}\right)^{d/4} e^{-\frac{\omega x^2}{2\hbar}}$$
 
-The DSM training is given in `train-DSM.py`. This file runs DSM training, saves trained models, losses plot, samples with trained NNs and makes density plots after training; it also runs the numerical solution (for $d=2$ as qmsolve works for $d=2$ by default) for the specified problem, and saves density and statistics plots. To run it run from the terminal:
-```
+It is a stationary system with constant mean position and variance.
+
+### Interacting Case
+**Full Potential with Interaction:**
+$$V(x) = \frac{1}{2}m\omega^2 x^2 + \frac{g}{2\sqrt{2\pi s_2}} \exp\left(-\frac{(x_1 - x_2)^2}{2s_2}\right)$$
+
+**Key Parameters:**
+- **$g$**: Interaction strength (controls dynamics)
+- **$s_2$**: Interaction range parameter
+- **Initial condition**: Non-interacting ground state $\Psi_0(x)$
+
+*System behavior*: Non-stationary dynamics due to particle interactions.
+
+## Available Methods
+
+### 1. Deep Stochastic Mechanics (DSM)
+```bash
 bash run_dsm.sh
 ```
-Feel free to play with hyperparameters (for example, running training for -n_epochs=10 epochs to see how it works, -invar=0 to use regular NN architecture).
 
-To run PINN:
+**Features:**
+- `torch.jit` optimized training
+- Automatic model saving and visualization
+- Density plot generation
+- Statistical analysis with numerical comparisons
+
+**Hyperparameter Examples:**
+```bash
+# Quick test
+python train-DSM.py -n_epochs 100
 
 ```
+
+### 2. Physics-Informed Neural Networks (PINN)
+```bash
 python interacting_PINN.py
 ```
 
-We use qmsolve lib as a numerical solver, but it requires to change some constants in the library: open constants file in your system (for example, `vim env_python/lib/python3.8/site-packages/qmsolve/util/constants.py`), and change them as they're provided here (see file `constants.py` in this repo).
-
-To run t-VMC: 
-
-```
+### 3. Time-dependent Variational Monte Carlo (t-VMC)
+```bash
 python tvmc_jastrow_basis.py
 ```
 
-For t-VMC implementation, we use the NetKet library. For installation, follow their [instructions](https://netket.readthedocs.io/en/latest/docs/install.html). The variable `N` in the code corresponds to the number of interacting bosons, `n_max` is the number of basis functions, `n_samples` is the number of MC samples per step, `dt` is the step size in time for optimization, `tstops` defines at what time steps to save the model's predictions. 
+## ⚙Setup Requirements
+
+### Standard Dependencies
+- Python 3.3+, PyTorch 1.13.1, NumPy, SciPy
+
+### Method-Specific Setup
+
+#### For Numerical Comparisons (qmsolve)
+⚠️ **Important**: Modify qmsolve constants before use:
+
+1. Locate: `<python_env>/lib/python3.8/site-packages/qmsolve/util/constants.py`
+2. Replace with values from `constants.py` in this repository
+3. Works for $d=2$ by default
+
+#### For t-VMC (NetKet)
+Install NetKet following their [official instructions](https://netket.readthedocs.io/en/latest/docs/install.html).
+
+**Key t-VMC Parameters:**
+- `N`: Number of interacting bosons
+- `n_max`: Number of basis functions  
+- `n_samples`: MC samples per optimization step
+- `dt`: Time step size for optimization
+- `tstops`: Time points for saving predictions
+
+## Research Applications
+
+This implementation enables study of:
+- **Many-body quantum dynamics** with controllable interactions
+- **Method comparisons** (DSM vs. PINN vs. t-VMC)
+- **Scaling behavior** with particle number and interaction strength
+
+---
+
+*This implementation showcases DSM's effectiveness for interacting quantum many-body systems, providing a comprehensive comparison framework with established methods.*

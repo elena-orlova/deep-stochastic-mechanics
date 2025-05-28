@@ -1,23 +1,68 @@
-## Non-interacting particles
+# Non-interacting Bosons in Harmonic Oscillator
 
-We have $d$ 1-dimensional non-interacting bosons in a harmonic oscillator. In this folder, we provide training for DSM only (PINN is available in notebooks folder).
+[![Python](https://img.shields.io/badge/Python-3.3+-green)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-orange)](https://pytorch.org/)
+[![Optimized](https://img.shields.io/badge/torch.jit-Optimized-blue)](https://pytorch.org/docs/stable/jit.html)
 
-##### Zero initial phase
-We consider a harmonic oscillator model with 
-$x\in\mathbb{R}^{1}$, 
-$V (x) = \frac{1}{2}m\omega^2(x - 0.1)^2$, $t\in [0, 1]$ and where $m=1$ and $\omega=1$. The initial wave function is given as $\psi(x, 0) \propto e^{-x^2/(4\sigma^2)}$. Then $u_0(x) = -\frac{h x}{2 m \sigma^2}$, ${v}_0(x) \equiv 0$. $X(0)$ comes from $X(0) \sim \mathcal{N}(0, \sigma^2),$ where $\sigma^2 = 0.1$. 
+Deep Stochastic Mechanics implementation for *d* one-dimensional non-interacting bosons in a harmonic oscillator potential.
 
-##### Non-zero initial phase
+> This folder provides optimized DSM training with `torch.jit`. For PINN comparisons, see the `../notebooks/` folder.
 
-We also consider a non-zero initial phase $S_0(x) = -5x$. It corresponds to the initial impulse of a particle. Then ${v}_0(x) \equiv -\frac{5\hbar}{m}$.
+## Physical System
 
-To define the initial  phase coefficient $S_0(x) = cx$ (including $c=0$), use an argument `-init_phase -5` in the commend line.
+**Harmonic Oscillator Setup:**
+- Domain: $x \in \mathbb{R}^1$
+- Potential: $V(x) = \frac{1}{2}m\omega^2(x - 0.1)^2$ 
+- Parameters: $m = 1$, $\omega = 1$
+- Time evolution: $t \in [0, 1]$
 
-### Code
+**Initial Wave Function:**
+$$\psi(x, 0) \propto e^{-x^2/(4\sigma^2)}$$
 
-The DSM training is given in `train-DSM.py`. This file runs DSM training, saves trained models, losses plot, samples with trained NNs and makes density plots after training; it also runs the numerical solution for the specified problem, and saves density and statistics plots. To run it run from the terminal:
-```
+where $X(0) \sim \mathcal{N}(0, \sigma^2)$ with $\sigma^2 = 0.1$.
+
+## Configuration Options
+
+### Zero Initial Phase (Default)
+- $u_0(x) = -\frac{\hbar x}{2m\sigma^2}$
+- $v_0(x) \equiv 0$
+- $X(0)$ comes from $X(0) \sim \mathcal{N}(0, \sigma^2),$ where $\sigma^2 = 0.1$. 
+
+### Non-zero Initial Phase
+- Initial phase: $S_0(x) = cx$ (e.g., $c = -5$)
+- $v_0(x) \equiv -\frac{c\hbar}{m}$
+- Corresponds to initial particle momentum
+
+Set initial phase coefficient with `-init_phase -5` command line argument.
+
+## Training & Execution
+
+### Quick Start
+```bash
 bash run_dsm.sh
 ```
-Feel free to play with hyperparameters (for example, running training for `-n_epochs=10`epochs to see how it works, changing lr, etc.).
+
+### Main Training Script: `train-DSM.py`
+**Automatically handles:**
+- DSM model training with `torch.jit` optimization
+- Model checkpointing and loss visualization
+- Sample generation with trained neural networks
+- Density plot creation
+- Numerical solution comparison
+
+### Hyperparameter Tuning
+Experiment with different settings:
+```bash
+# Quick test run
+python train-DSM.py -n_epochs 10
+
+# Adjust learning rate
+python train-DSM.py -lr 0.001
+```
+
+This file runs DSM training, saves trained models, losses plot, samples with trained NNs and makes density plots after training; it also runs the numerical solution for the specified problem, and saves density and statistics plots.
+
+---
+
+*This implementation demonstrates DSM's effectiveness for quantum harmonic oscillator problems with excellent computational efficiency.*
 
